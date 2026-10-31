@@ -1,4 +1,4 @@
-# Veylance
+# VeyLance
 
 **[Powered by NamoID](https://namoid.in)** ·
 [NamoID documentation](https://docs.namoid.in) ·
@@ -26,7 +26,7 @@ credentials, authorization codes, or tokens.
 ## Community project metadata
 
 - **Challenge ID:** `responsible-ai-access-gate`
-- **Contributor:** Your Name
+- **Contributor:** Aryan Bansal
 - **Live demo:** Add URL
 - **Final commit:** Add the full 40-character SHA at submission time
 - **Time spent:** Add estimate
@@ -38,7 +38,7 @@ credentials, authorization codes, or tokens.
 2. In the new repository, run:
 
 ```bash
-npm run setup -- --challenge=responsible-ai-access-gate --name="Your Name" --title="Your Project" --repo=https://github.com/you/project
+npm run setup -- --challenge=responsible-ai-access-gate --name="Aryan Bansal" --title="Your Project" --repo=https://github.com/you/project
 npm run check
 ```
 

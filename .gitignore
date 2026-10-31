@@ -2,3 +2,8 @@
 .env
 node_modules/
 dist/
+
+# Local state and Python environment
+.venv/
+data/
+backups/
