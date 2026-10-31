@@ -15,13 +15,16 @@ NamoID product, security recommendation, or endorsement.
 
 ## NamoID integration
 
-This project must use **NamoID Hosted Auth as the application's sign-in
-system**. Hosted Auth is the application's authentication system, not a
-social-login button.
+VeyLance uses a NamoID Test server-rendered web application. Express starts
+Hosted Auth with S256 PKCE and a server-held transaction. The callback at
+`/auth/callback` checks state and issuer, exchanges the code with the
+server-held Client Secret, validates the signed ID token and nonce, and
+compares its subject with UserInfo. Users are keyed by the NamoID `sub`.
+Express issues an opaque HttpOnly application session cookie. The Test
+Client ID selects the issuer through NamoID discovery.
 
-Describe the application/client type, issuer/environment configuration,
-callback path, application session, and complete user journey. Do not commit
-credentials, authorization codes, or tokens.
+Keep the Client Secret in local `.env` or a deployment secret store. Never
+commit credentials, authorization codes, or tokens.
 
 ## Community project metadata
 
@@ -38,14 +41,11 @@ credentials, authorization codes, or tokens.
 2. In the new repository, run:
 
 ```bash
-npm run setup -- --challenge=responsible-ai-access-gate --name="Aryan Bansal" --title="Your Project" --repo=https://github.com/you/project
+npm run setup -- --challenge=responsible-ai-access-gate --name="Aryan Bansal" --title="VeyLance" --repo=https://github.com/Yashika28284/Veylance
 npm run check
 ```
 
-Replace `responsible-ai-access-gate` with the ID shown in the selected problem statement.
-Setup removes
-the remaining template placeholders and records machine-readable attribution in
-[`namoid-challenge.json`](./namoid-challenge.json).
+This repository has already been initialized for the challenge.
 
 3. [Create an application in the NamoID Console](https://console.namoid.in/login).
 4. Configure its callback URL and integrate NamoID Hosted Auth into your POC.
@@ -54,23 +54,33 @@ the remaining template placeholders and records machine-readable attribution in
 ## Run locally
 
 ```bash
+copy .env.example .env
+npm install
 npm run dev
 ```
 
-Open `http://localhost:8080`. Replace the starter page with your application or
-keep its branded footer and metadata when adapting it to another framework.
+Fill `NAMOID_CLIENT_ID` and `NAMOID_CLIENT_SECRET` in the ignored `.env` file.
+Register `http://localhost:3000/auth/callback` and
+`http://localhost:3000/` in the NamoID Test application's callback and logout
+settings. Open `http://localhost:3000` and choose Sign in with NamoID.
 
 ## What works
 
-Describe the required paths you completed.
+The challenge template validates with `npm run check`. The synthetic hospital
+dataset and deterministic generator are in `fixtures/hospitals`. Local
+Hosted Auth routes and an application session are implemented. The live
+sign-in round trip still needs verification with the Test Client Secret.
 
 ## Known limitations
 
-State what remains incomplete. Stopping at the challenge timebox is expected.
+The request, review, gateway, ledger, and federated training workflows are in
+progress. The current page is an authentication smoke test.
 
 ## AI and external resources
 
-List meaningful AI assistance, adapted code, tutorials, and libraries.
+Codex helped implement the initial Node integration. Dependencies include
+Express, cookie-parser, and `@namoidhq/js`. The authentication flow follows
+the NamoID documentation and official Express example.
 
 ## NamoID attribution
 

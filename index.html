@@ -39,14 +39,37 @@
         </div>
       </section>
       <section class="workspace">
-        <p class="eyebrow">YOUR IMPLEMENTATION</p>
-        <h2>Replace this section with your working project.</h2>
-        <p>Replace this starter with your product and integrate NamoID Hosted Auth as the application's sign-in system. Hosted Auth is not a social-login button. Your implementation and design remain yours.</p>
+        <p class="eyebrow">TEST APPLICATION</p>
+        <h2>NamoID Hosted Auth</h2>
+        <p id="auth-status">Checking your session…</p>
+        <a id="sign-in" class="button" href="/auth/login" hidden>Sign in with NamoID</a>
+        <button id="sign-out" hidden>Sign out</button>
       </section>
     </main>
     <footer>
       <p><strong><a href="https://namoid.in">Powered by NamoID</a></strong> · <a href="https://docs.namoid.in">Documentation</a> · <a href="https://challenges.namoid.in">Engineering Challenges</a></p>
       <p>Contributor-owned · Not an official NamoID product</p>
     </footer>
+  <script>
+    const status = document.getElementById('auth-status');
+    const signIn = document.getElementById('sign-in');
+    const signOut = document.getElementById('sign-out');
+    fetch('/api/me').then(async response => {
+      if (!response.ok) {
+        status.textContent = 'Sign in to start the VeyLance test application.';
+        signIn.hidden = false;
+        return;
+      }
+      const { user } = await response.json();
+      status.textContent = 'Signed in as ' + user.display_name;
+      signOut.hidden = false;
+    }).catch(() => {
+      status.textContent = 'The sign-in server is unavailable.';
+    });
+    signOut.addEventListener('click', async () => {
+      const response = await fetch('/auth/logout', { method: 'POST' });
+      if (response.ok) location.assign((await response.json()).redirect);
+    });
+  </script>
   </body>
 </html>

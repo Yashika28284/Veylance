@@ -1,14 +1,20 @@
 {
-  "name": "namoid-challenge-submission",
-  "version": "0.0.0",
+  "name": "veylance",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "setup": "node scripts/setup.mjs",
     "check": "node scripts/validate.mjs",
-    "dev": "python3 -m http.server 8080"
+    "dev": "node --env-file=.env server.js",
+    "start": "node server.js"
   },
   "engines": {
     "node": ">=24"
+  },
+  "dependencies": {
+    "@namoidhq/js": "3.2.0",
+    "cookie-parser": "1.4.7",
+    "express": "5.3.0"
   }
 }
