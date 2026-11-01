@@ -1,0 +1,31 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      DB_FILE: /app/data/veylance.db
+      ARTIFACTS_DIR: /app/artifacts
+      DATASET_DIR: /app/datasets
+      PYTHON_BIN: /opt/veylance-python/bin/python
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+      - ./datasets:/app/datasets
+    expose: ["3000"]
+    restart: unless-stopped
+    stop_grace_period: 15s
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+  nginx:
+    image: nginx:1.28.0-alpine
+    depends_on: [app]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./deploy/nginx/active.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./dist:/srv/veylance:ro
+      - ./deploy/certbot/www:/var/www/certbot:ro
+      - ./deploy/certbot/conf:/etc/letsencrypt:ro
+    restart: unless-stopped

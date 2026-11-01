@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      APP_ORIGIN: http://localhost:3000
+      HOST: 0.0.0.0
+      PORT: 3000
+      DB_FILE: /app/data/veylance.db
+      ARTIFACTS_DIR: /app/artifacts
+      DATASET_DIR: /app/datasets
+      PYTHON_BIN: /opt/veylance-python/bin/python
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+      - ./datasets:/app/datasets
+    restart: unless-stopped
+    stop_grace_period: 15s

@@ -102,3 +102,8 @@ Open the [Submit a community build](https://github.com/namoidhq/namoid-challenge
 form and paste the 40-character SHA into **Pinned commit SHA**. This identifies
 one immutable version even if you continue changing the repository later. You
 can request a catalog update or removal later.
+
+
+## Veylance application
+
+For the current application, backend, federated learning model, and local setup, see [application documentation](README-app.md). The original project metadata and GitHub Pages landing page remain in place.

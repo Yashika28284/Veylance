@@ -1,20 +1,34 @@
 {
   "name": "veylance",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "scripts": {
-    "setup": "node scripts/setup.mjs",
-    "check": "node scripts/validate.mjs",
-    "dev": "node --env-file=.env server.js",
-    "start": "node server.js"
-  },
+  "description": "Warrant-governed federated learning research console",
   "engines": {
-    "node": ">=24"
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/index.js",
+    "dev": "node --env-file-if-exists=.env --watch server/index.js",
+    "test": "node --env-file-if-exists=.env --test tests/*.test.js",
+    "test:integration": "node --env-file-if-exists=.env --test tests/integration.test.js",
+    "vendor": "node scripts/vendor.mjs",
+    "db:init": "node --env-file-if-exists=.env scripts/admin.mjs init",
+    "db:users": "node --env-file-if-exists=.env scripts/admin.mjs users",
+    "db:assign": "node --env-file-if-exists=.env scripts/admin.mjs assign",
+    "db:assign-email": "node --env-file-if-exists=.env scripts/admin.mjs assign-email",
+    "db:backup": "node --env-file-if-exists=.env scripts/admin.mjs backup",
+    "db:restore": "node --env-file-if-exists=.env scripts/admin.mjs restore",
+    "test:browser-preview": "node tests/preview-server.js",
+    "test:python": "python -m unittest discover -s tests -p test_*.py -v",
+    "check": "node scripts/validate.mjs",
+    "setup": "node scripts/setup.mjs"
   },
   "dependencies": {
-    "@namoidhq/js": "3.2.0",
-    "cookie-parser": "1.4.7",
-    "express": "5.3.0"
+    "express": "5.1.0",
+    "chart.js": "4.5.1",
+    "@fontsource/dm-sans": "5.2.6",
+    "@fontsource/fraunces": "5.2.8",
+    "openid-client": "6.8.8"
   }
 }

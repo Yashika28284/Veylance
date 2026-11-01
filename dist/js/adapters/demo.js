@@ -1,0 +1,31 @@
+import { createFixtures,addAudit,FIXTURE_METRICS } from '../fixtures.js';
+import { FEATURES,OPERATIONS,RESOURCE,PURPOSE,REVIEWERS,authorize,effectiveStatus,validateNarrowing,demoChecksum,ledgerPayload } from '../domain.js';
+export function createDemoAdapter(storage=globalThis.localStorage){
+ let s;try{s=JSON.parse(storage.getItem('veylance-demo-v1'));}catch{}if(!s||s.schema!==1)s=createFixtures();
+ const clone=()=>structuredClone(s),save=()=>{try{storage.setItem('veylance-demo-v1',JSON.stringify(s));}catch{}return clone();};
+ const log=(actor,action,w,detail)=>addAudit(s,{actor,action,warrantId:w?.id??null,hospitalId:w?.hospitalId??null,detail});
+ function reviewer(id,w){const r=REVIEWERS.find(r=>r.id===id);if(!r)throw new Error('An authorized demo reviewer is required');if(w.requesterId===id)throw new Error('Self-approval is forbidden');return r;}
+ function review(w,id,scope){if(id===w.requesterId)throw new Error('Self-approval is forbidden');if(w.status!=='pending')throw new Error('Warrant is not awaiting review');const r=reviewer(id,w);if(w.reviews.some(rv=>rv.id===id))throw new Error('This identity already approved a slot');if(scope){validateNarrowing(w,scope);Object.assign(w,scope,{narrowed:true,consentAt:null,reviews:[],scopeVersion:(w.scopeVersion??1)+1});log(r.name,'Scope narrowed',w,'Earlier approvals invalidated');}w.reviews.push({...r,at:s.clock,decision:'approved'});w.history.push({at:s.clock,actor:r.name,action:scope?'Narrowed and approved':'Approved'});if(w.reviews.length===3)w.status=w.narrowed?'awaiting_acceptance':'approved';log(r.name,'Reviewer approved',w,w.status);}
+ function deny(w,request,sandbox=false){const decision=authorize(w,request,s.clock);if(decision.allowed)return decision;const e={id:'SEC-'+(s.events.length+1),at:s.clock,hospitalId:w.hospitalId,warrantId:w.id,code:decision.code,reason:decision.reason,operation:request.operation,features:request.features,sandbox};s.events.push(e);log('Authorization gate · demo','Contribution denied',w,decision.reason);return decision;}
+ return {mode:'demo',load:async()=>clone(),async command(action,p={}){
+  const before=clone();try{const w=s.warrants.find(w=>w.id===p.id);const actor=p.actorId??'reviewer-manager';
+   if(action==='reset'){s=createFixtures();return save();}
+   if(action==='request'){
+    if(p.resource!==RESOURCE||p.purpose!==PURPOSE||!p.features?.length||p.features.some(f=>!FEATURES.includes(f))||!p.operations?.length||p.operations.some(op=>!OPERATIONS.includes(op)))throw new Error('Use only approved model features, operations, resource and purpose');
+    if(!Number.isInteger(p.quota)||p.quota<1||p.quota>50||!Number.isFinite(p.duration)||p.duration<1||p.duration>72)throw new Error('Invalid contribution allowance or duration');
+    const h=s.hospitals.find(h=>h.id===p.hospitalId);if(!h)throw new Error('Hospital required');
+    const nw={...p,id:'WRT-2026-'+String(s.nextId++).padStart(3,'0'),requesterId:'requester-'+h.id,requesterName:h.name+' researcher',createdAt:s.clock,expiresAt:new Date(Date.parse(s.clock)+p.duration*3600000).toISOString(),used:0,status:'pending',scopeVersion:1,reviews:[],history:[{at:s.clock,actor:h.name+' researcher',action:'Requested'}],narrowed:false,consentAt:null};s.warrants.push(nw);log(nw.requesterName,'Warrant requested',nw,'Pending independent reviews');
+   }else if(action==='review'||action==='narrow'){if(!w)throw new Error('Warrant not found');review(w,actor,action==='narrow'?p.scope:null);}
+   else if(action==='accept'){if(!w||w.requesterId!==actor)throw new Error('Only the original requester may accept');if(w.status!=='awaiting_acceptance')throw new Error('No consent pending');w.consentAt=s.clock;w.status='approved';w.history.push({at:s.clock,actor,action:'Accepted narrowed scope'});log(actor,'Requester consent recorded',w,'Warrant activated');}
+   else if(action==='reject'){reviewer(actor,w);if(w.status!=='pending')throw new Error('Warrant is not awaiting review');w.status='rejected';log(actor,'Warrant rejected',w,'Rejected scope');}
+   else if(action==='revoke'){reviewer(actor,w);if(!p.reason?.trim())throw new Error('Reason required');w.status='revoked';w.history.push({at:s.clock,actor,action:'Revoked'});log(actor,'Warrant revoked',w,p.reason);if(w.hospitalId==='B')s.scenario=3;}
+   else if(action==='restrictedAttempt'){const b=s.warrants.find(w=>w.hospitalId==='B');deny(b,{resource:RESOURCE,purpose:PURPOSE,operation:'train_local',features:[...FEATURES,'age_band']});s.scenario=2;}
+   else if(action==='probe'){const base=structuredClone(s.warrants[0]),request={resource:RESOURCE,purpose:PURPOSE,operation:'submit_update',features:FEATURES};if(p.kind==='PURPOSE_MISMATCH')request.purpose='advertising';else if(p.kind==='EXPIRED')base.expiresAt=s.clock;else base.used=base.quota;deny(base,request,true);}
+   else if(action==='advanceRound'){
+    if(s.rounds.length>=12)throw new Error('Illustrative session complete');s.clock=new Date(Date.parse(s.clock)+300000).toISOString();const accepted=[],rejected=[];
+    for(const h of s.hospitals){if(h.id==='B'&&s.scenario>=4)continue;const hw=s.warrants.find(w=>w.hospitalId===h.id);const d=deny(hw,{resource:RESOURCE,purpose:PURPOSE,operation:'submit_update',features:FEATURES});if(d.allowed){hw.used++;accepted.push(h.id);}else rejected.push({hospitalId:h.id,code:d.code});}
+    const number=s.rounds.length+1,metrics=FIXTURE_METRICS[number-1];s.rounds.push({number,at:s.clock,modelVersion:'v0.'+number,modelHash:demoChecksum({number,metrics}),metrics,accepted,rejected,aggregation:'Sample-weighted FedAvg (illustrative)',evaluation:'Illustrative fixtures · no training executed'});log('Coordinator · demo','Round '+number+' aggregated',null,'Illustrative fixtures');s.scenario=s.scenario===0?1:s.scenario===3?4:s.scenario===4?5:s.scenario;
+   }else throw new Error('Unknown demo action');return save();
+  }catch(e){s=before;throw e;}
+ },async verifyLedger(){const valid=s.audit.every((e,i)=>e.previousHash===(i?s.audit[i-1].hash:'demo-genesis')&&e.hash===demoChecksum(ledgerPayload(e)));return {valid,count:s.audit.length,method:'FNV-style demo checksum; no SHA-256 verification',cryptographic:false,message:valid?'Demo consistency check passed · non-cryptographic':'Demo record mismatch',verifiedAt:new Date().toISOString()};}};
+}

@@ -1,9 +1,18 @@
 .DS_Store
 .env
 node_modules/
-dist/
 
 # Local state and Python environment
 .venv/
 data/
 backups/
+
+artifacts/
+artifacts-namoid/
+datasets/
+__pycache__/
+*.pyc
+tests/.qa/
+docs/evidence/
+.env.*
+!.env.example

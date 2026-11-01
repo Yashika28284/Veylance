@@ -1,0 +1,13 @@
+node_modules
+.venv
+.env
+.env.*
+!.env.example
+data
+artifacts
+datasets
+backups
+**/__pycache__
+tests/.qa
+
+.openai
